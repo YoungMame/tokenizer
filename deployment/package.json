@@ -5,9 +5,9 @@
   "scripts": {
     "test": "npx hardhat test",
     "compile": "npx hardhat compile",
-    "deploy": "npx hardhat ignition deploy ./ignition/modules/MameCoin.ts",
+    "deploy": "npx hardhat ignition deploy ./ignition/modules/MameCoin.ts --network fuji",
     "dev": "npx hardhat node",
-    "deploy:local": "npx hardhat ignition deploy ./ignition/modules/Lock.ts --network localhost"
+    "deploy:local": "npx hardhat ignition deploy ./ignition/modules/MameCoin.ts --network localhost"
   },
   "keywords": [],
   "author": "",

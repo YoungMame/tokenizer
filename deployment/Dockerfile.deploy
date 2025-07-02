@@ -5,10 +5,11 @@ WORKDIR /usr/src/app
 RUN apk update --no-cache && \ 
     apk add pnpm
 
+COPY ../code /usr/src/app/code
 COPY ./ /usr/src/app/
 
-RUN pnpm i
+RUN pnpm i --prod
 
-RUN chmod +x dev.sh 
+RUN chmod +x deploy.sh 
 
-ENTRYPOINT [ "./dev.sh" ]
+ENTRYPOINT [ "./deploy.sh" ]

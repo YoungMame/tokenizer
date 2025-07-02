@@ -1,0 +1,15 @@
+FROM node:24-alpine
+
+WORKDIR /usr/src/app
+
+RUN apk update --no-cache && \ 
+    apk add pnpm
+
+COPY ./code /usr/src/app/code
+COPY ./deployment /usr/src/app/
+
+RUN pnpm i
+
+RUN chmod +x dev.sh 
+
+ENTRYPOINT [ "./dev.sh" ]

@@ -14,7 +14,7 @@ async function main() {
     const TournamentFactoryFactory = await ethers.getContractFactory("TournamentFactory");
     const tournamentFactory = await TournamentFactoryFactory.deploy();
 
-    console.log("TournamentFactory deployed to:", tournamentFactory.target);
+    console.timeLog("TournamentFactory deployed to:", tournamentFactory.target);
   
     saveFrontendFiles(tournamentFactory);
 }
