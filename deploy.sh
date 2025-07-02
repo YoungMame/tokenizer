@@ -2,6 +2,6 @@
 
 cd /usr/src/app
 
-npm run build
+pnpm run compile
 
-npm run deploy
+pnpm run deploy

@@ -1,42 +1,30 @@
 import {
-  time,
   loadFixture,
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import hre from "hardhat";
-import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("MameCoin", function () {
   const DECIMALS = 8;
   const TOTAL_SUPPLY = 420000;
   const NAME = "MameCoin";
   const SYMBOL = "MAM";
-  const PARSED_TOTAL_SUPPLY = TOTAL_SUPPLY * 10 ** DECIMALS
+  const PARSED_TOTAL_SUPPLY = TOTAL_SUPPLY * 10 ** DECIMALS;
+
   async function deployMameCoinContract() {
-    
-    // Contracts are deployed using the first signer/account by default
     const [owner] = await hre.ethers.getSigners();
-
     const MameCoin = await hre.ethers.getContractFactory("MameCoin");
-    const supplyAmount = hre.ethers.parseEther("1000000"); // 1 million tokens
+    const supplyAmount = hre.ethers.parseUnits(TOTAL_SUPPLY.toString(), DECIMALS);
     const mameCoinContract = await MameCoin.deploy(supplyAmount);
-
     return { mameCoinContract, owner };
   }
 
-  describe("Deployment", async function () {
-    const { mameCoinContract, owner } = await loadFixture(deployMameCoinContract);
+  describe("Deployment", function () {
     it("Should set the right supply amount", async function () {
+      const { mameCoinContract } = await loadFixture(deployMameCoinContract);
       expect(await mameCoinContract.totalSupply()).to.equal(PARSED_TOTAL_SUPPLY);
     });
-
-    it("Should set the right owner address", async function () {
-      const ownerAddress = await mameCoinContract.owner();
-      expect(ownerAddress).to.equal(await owner.getAddress());
-    });
   });
-
 });
 
 

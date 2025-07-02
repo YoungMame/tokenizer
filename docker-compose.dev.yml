@@ -5,7 +5,8 @@ services:
     container_name: main-service
     restart: on-failure
     volumes:
-      - ./back/main-service/asset/srcs:/usr/src/app
+      - ./test:/usr/src/app/test
+      - ./contracts:/usr/src/app/contracts
     environment:
       SIGNER_PRIVATE_KEY: ${SIGNER_PRIVATE_KEY:?}
       FUJI_CHAIN_ID: ${FUJI_CHAIN_ID:?}
@@ -14,9 +15,7 @@ services:
       AVALANCHE_CHAIN_ID: ${AVALANCHE_CHAIN_ID:?}
     build:
         context: ./
-        dockerfile: Dockerfile.ev
-        args:
-          NODE_ENV: ${NODE_ENV:?}
+        dockerfile: Dockerfile.dev
     expose:
       - 3000
     ports:

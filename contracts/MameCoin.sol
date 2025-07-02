@@ -12,7 +12,7 @@ import "hardhat/console.sol";
 
 contract MameCoin is ERC20 {
     uint8 private _decimals;
-    address owner;
+    address _owner;
 
     constructor(uint256 supply) ERC20("MameCoin", "MAM") {
         _decimals = 8;  // number of decimals
@@ -21,8 +21,9 @@ contract MameCoin is ERC20 {
     }
 
     modifier onlyOwner() {
-        require(msg.sender == owner);
-    };
+        require(msg.sender == _owner, "Caller is not the owner");
+        _;
+    }
 
     function decimals() public view virtual override returns (uint8) {
         return _decimals;

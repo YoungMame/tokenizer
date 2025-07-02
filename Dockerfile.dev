@@ -1,12 +1,13 @@
-FROM node:24-bullseye
+FROM node:24-alpine
 
 WORKDIR /usr/src/app
 
-RUN apk update --no-cache
+RUN apk update --no-cache && \ 
+    apk add pnpm
 
 COPY ./ /usr/src/app/
 
-RUN npm i
+RUN pnpm i
 
 RUN chmod +x dev.sh 
 
