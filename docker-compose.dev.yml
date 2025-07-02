@@ -1,0 +1,29 @@
+name: tokenizer
+
+services:
+  main-service:
+    container_name: main-service
+    restart: on-failure
+    volumes:
+      - ./back/main-service/asset/srcs:/usr/src/app
+    environment:
+      SIGNER_PRIVATE_KEY: ${SIGNER_PRIVATE_KEY:?}
+      FUJI_CHAIN_ID: ${FUJI_CHAIN_ID:?}
+      FUJI_RPC_URL: ${FUJI_RPC_URL:?}
+      AVALANCHE_RPC_URL: ${AVALANCHE_RPC_URL:?}
+      AVALANCHE_CHAIN_ID: ${AVALANCHE_CHAIN_ID:?}
+    build:
+        context: ./
+        dockerfile: Dockerfile.ev
+        args:
+          NODE_ENV: ${NODE_ENV:?}
+    expose:
+      - 3000
+    ports:
+      - 8545:8545
+    networks:
+      - router
+
+networks:
+  router:
+    driver: bridge
