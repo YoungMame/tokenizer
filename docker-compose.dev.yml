@@ -7,6 +7,7 @@ services:
     volumes:
       - ./deployment/test:/usr/src/app/test
       - ./code:/usr/src/app/code
+      # - ./deployment:/usr/src/app
     environment:
       SIGNER_PRIVATE_KEY: ${SIGNER_PRIVATE_KEY:?}
       FUJI_CHAIN_ID: ${FUJI_CHAIN_ID:?}

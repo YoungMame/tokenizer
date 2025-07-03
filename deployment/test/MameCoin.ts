@@ -3,147 +3,168 @@ import {
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
+import deployFixture from "./fixtures/deployFixture";
+import filledAccountsFxiture from "./fixtures/filledAccountsFixture";
+
+export const DECIMALS = 8;
+export const TOTAL_SUPPLY = 420000;
+export const NAME = "MameCoin";
+export const SYMBOL = "MAM";
+export const PARSED_TOTAL_SUPPLY = TOTAL_SUPPLY * 10 ** DECIMALS;
 
 describe("MameCoin", function () {
-  const DECIMALS = 8;
-  const TOTAL_SUPPLY = 420000;
-  const NAME = "MameCoin";
-  const SYMBOL = "MAM";
-  const PARSED_TOTAL_SUPPLY = TOTAL_SUPPLY * 10 ** DECIMALS;
-
-  async function deployMameCoinContract() {
-    const [owner] = await hre.ethers.getSigners();
-    const MameCoin = await hre.ethers.getContractFactory("MameCoin");
-    const supplyAmount = hre.ethers.parseUnits(TOTAL_SUPPLY.toString(), DECIMALS);
-    const mameCoinContract = await MameCoin.deploy(supplyAmount);
-    return { mameCoinContract, owner };
-  }
-
   describe("Deployment", function () {
     it("Should set the right supply amount", async function () {
-      const { mameCoinContract } = await loadFixture(deployMameCoinContract);
+      const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
       expect(await mameCoinContract.totalSupply()).to.equal(PARSED_TOTAL_SUPPLY);
+    });
+
+    it("Sould have the right name and symbol", async function () {
+      const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+      expect(await mameCoinContract.name()).to.equal(NAME);
+      expect(await mameCoinContract.symbol()).to.equal(SYMBOL);
+    });
+  });
+
+  describe("Roles", function () {
+    describe("Mint", function () {
+      it("Alice should not be able to mint the coin money", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+        await expect (
+          mameCoinContract.connect(alice).mint(owner, 42)
+        ).to.be.revertedWithCustomError(
+          mameCoinContract,
+          "AccessControlUnauthorizedAccount"
+        );
+      });
+      it("Bob be able to mint the coin money", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+        await expect(
+          mameCoinContract.connect(bob).mint(owner, 42)
+        ).to.not.be.reverted;
+      });
+    });
+    describe("Burn", function () {
+      it("Bob should not be able to burn the coin money", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+        await expect (
+          mameCoinContract.connect(bob).burn(owner, 42)
+        ).to.be.revertedWithCustomError(
+          mameCoinContract,
+          "AccessControlUnauthorizedAccount"
+        );
+      });
+      it("Alice be able to burn the coin money", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+        await expect(
+          mameCoinContract.connect(alice).burn(owner, 42)
+        ).to.not.be.reverted;
+      });
+    });
+    describe("Pause", function () {
+      it("Bob should not be able to burn the pause the transactions", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+        await expect (
+          mameCoinContract.connect(bob).pause()
+        ).to.be.revertedWithCustomError(
+          mameCoinContract,
+          "AccessControlUnauthorizedAccount"
+        );
+      });
+      it("Jon should be able to pause the transactions", async function() {
+        const { mameCoinContract, owner, bob, alice, jon } = await loadFixture(deployFixture);
+        await expect(
+          mameCoinContract.connect(jon).pause()
+        ).to.not.be.reverted;
+      });
+      it("Nobdoy should not be able to send transaction", async function() {
+        const { mameCoinContract, owner, bob, alice, jon } = await loadFixture(deployFixture);
+        mameCoinContract.connect(owner).mint(42, bob);
+        await expect(
+          mameCoinContract.connect(jon).pause()
+        ).to.not.be.reverted;
+        await expect (
+          mameCoinContract.connect(alice).transfer(bob, 42)
+        ).to.be.revertedWithCustomError(
+          mameCoinContract,
+          "EnforcedPause"
+        );
+      });
+    });
+    describe("Ownership", function () {
+      it("Bob should not be able to give ownnership", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+        await expect (
+          mameCoinContract.connect(bob).transferOwnership(bob)
+        ).to.be.revertedWithCustomError(
+          mameCoinContract,
+          "OwnableUnauthorizedAccount"
+        );
+      });
+      it("Owner should be able to give ownership to bob", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+        await mameCoinContract.connect(owner).transferOwnership(bob.address);
+        expect(await mameCoinContract.owner()).to.be.equal(bob.address);
+      });
+      it("Owner should be able to leave contract without owner (bad idea)", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+        await expect(
+          mameCoinContract.connect(owner).renounceOwnership()
+        ).to.not.be.reverted;
+        expect(await mameCoinContract.owner()).to.equal(ethers.ZeroAddress);
+      });
+    });
+  });
+
+  
+
+  describe("Transactions", function () {
+    describe("Allowance", function () {
+      it("Bob should not be able to spend money from Alice (revert)", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+        await expect(
+          mameCoinContract.connect(bob).transferFrom(alice, bob, 42)
+        ).to.be.revertedWithCustomError(
+          mameCoinContract,
+          "ERC20InsufficientAllowance"
+        );
+      });
+  
+      it("Bob should be able to spend money from Alice after she allowed", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(filledAccountsFxiture);
+        const balanceBobBefore = await mameCoinContract.balanceOf(bob.address);
+        await mameCoinContract.connect(alice).approve(bob, 42);
+        await expect(
+          mameCoinContract.connect(bob).transferFrom(alice, bob, 42)
+        ).to.not.be.reverted;
+        const balanceBobAfter = await mameCoinContract.balanceOf(bob.address);
+
+        expect(balanceBobAfter - balanceBobBefore).to.equal(42);
+      });
+    });
+
+    describe("Normal", function () {
+      it("bob should not be able to send money to Alice because he doesen't have enough", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+        await expect(
+          mameCoinContract.connect(bob).transfer(alice, 42)
+        ).to.be.revertedWithCustomError(
+          mameCoinContract,
+          "ERC20InsufficientBalance"
+        );
+      });
+      it("bob should be able to send money to Alice", async function() {
+        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
+        await mameCoinContract.connect(owner).transfer(bob, 42);
+        const balanceBobBefore = await mameCoinContract.balanceOf(bob.address);
+        await expect(
+          mameCoinContract.connect(bob).transfer(alice, 42)
+        ).to.not.be.reverted;
+        const balanceBobAfter = await mameCoinContract.balanceOf(bob.address);
+        const balanceAlice = await mameCoinContract.balanceOf(alice.address);
+        expect(balanceBobAfter - balanceBobBefore).to.equal(-42);
+        expect(balanceAlice).to.equal(42);
+      })
     });
   });
 });
-
-
-// describe("MameCoin", function () {
-//   // We define a fixture to reuse the same setup in every test.
-//   // We use loadFixture to run this setup once, snapshot that state,
-//   // and reset Hardhat Network to that snapshot in every test.
-//   async function deployOneYearLockFixture() {
-//     const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-//     const ONE_GWEI = 1_000_000_000;
-
-//     const lockedAmount = ONE_GWEI;
-//     const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
-
-//     // Contracts are deployed using the first signer/account by default
-//     const [owner, otherAccount] = await hre.ethers.getSigners();
-
-//     const Lock = await hre.ethers.getContractFactory("Lock");
-//     const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-//     return { lock, unlockTime, lockedAmount, owner, otherAccount };
-//   }
-
-//   describe("Deployment", function () {
-//     it("Should set the right unlockTime", async function () {
-//       const { lock, unlockTime } = await loadFixture(deployOneYearLockFixture);
-
-//       expect(await lock.unlockTime()).to.equal(unlockTime);
-//     });
-
-//     it("Should set the right owner", async function () {
-//       const { lock, owner } = await loadFixture(deployOneYearLockFixture);
-
-//       expect(await lock.owner()).to.equal(owner.address);
-//     });
-
-//     it("Should receive and store the funds to lock", async function () {
-//       const { lock, lockedAmount } = await loadFixture(
-//         deployOneYearLockFixture
-//       );
-
-//       expect(await hre.ethers.provider.getBalance(lock.target)).to.equal(
-//         lockedAmount
-//       );
-//     });
-
-//     it("Should fail if the unlockTime is not in the future", async function () {
-//       // We don't use the fixture here because we want a different deployment
-//       const latestTime = await time.latest();
-//       const Lock = await hre.ethers.getContractFactory("Lock");
-//       await expect(Lock.deploy(latestTime, { value: 1 })).to.be.revertedWith(
-//         "Unlock time should be in the future"
-//       );
-//     });
-//   });
-
-//   describe("Withdrawals", function () {
-//     describe("Validations", function () {
-//       it("Should revert with the right error if called too soon", async function () {
-//         const { lock } = await loadFixture(deployOneYearLockFixture);
-
-//         await expect(lock.withdraw()).to.be.revertedWith(
-//           "You can't withdraw yet"
-//         );
-//       });
-
-//       it("Should revert with the right error if called from another account", async function () {
-//         const { lock, unlockTime, otherAccount } = await loadFixture(
-//           deployOneYearLockFixture
-//         );
-
-//         // We can increase the time in Hardhat Network
-//         await time.increaseTo(unlockTime);
-
-//         // We use lock.connect() to send a transaction from another account
-//         await expect(lock.connect(otherAccount).withdraw()).to.be.revertedWith(
-//           "You aren't the owner"
-//         );
-//       });
-
-//       it("Shouldn't fail if the unlockTime has arrived and the owner calls it", async function () {
-//         const { lock, unlockTime } = await loadFixture(
-//           deployOneYearLockFixture
-//         );
-
-//         // Transactions are sent using the first signer by default
-//         await time.increaseTo(unlockTime);
-
-//         await expect(lock.withdraw()).not.to.be.reverted;
-//       });
-//     });
-
-//     describe("Events", function () {
-//       it("Should emit an event on withdrawals", async function () {
-//         const { lock, unlockTime, lockedAmount } = await loadFixture(
-//           deployOneYearLockFixture
-//         );
-
-//         await time.increaseTo(unlockTime);
-
-//         await expect(lock.withdraw())
-//           .to.emit(lock, "Withdrawal")
-//           .withArgs(lockedAmount, anyValue); // We accept any value as `when` arg
-//       });
-//     });
-
-//     describe("Transfers", function () {
-//       it("Should transfer the funds to the owner", async function () {
-//         const { lock, unlockTime, lockedAmount, owner } = await loadFixture(
-//           deployOneYearLockFixture
-//         );
-
-//         await time.increaseTo(unlockTime);
-
-//         await expect(lock.withdraw()).to.changeEtherBalances(
-//           [owner, lock],
-//           [lockedAmount, -lockedAmount]
-//         );
-//       });
-//     });
-//   });
-// });
