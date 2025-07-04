@@ -6,7 +6,7 @@ import "hardhat/console.sol";
 
 
 contract Multisig {
-    address[] private signers;
+    address[] public signers;
     address immutable public  contractAddress;
     address immutable public accountAddress;
     uint public signersCountNeeded;
@@ -20,9 +20,21 @@ contract Multisig {
         mapping(address => bool) isConfirmed;
     }
 
+    Transaction[] transactions;
+
     event NewTransaction(uint indexed transactionId, address to, uint256 value);
 
-    Transaction[] transactions;
+    event NewSigner(address signer);
+
+    event SignerRevoked(address signer);
+
+    event TransactionSigned(uint indexed transactionId, address signer, uint lastingConfirmations);
+
+    event TransactionConfirmed(uint transactionId, address to, uint256 value);
+
+    event TransactionExecuted(uint transactionId, address to, uint256 value);
+
+    event SignerCountNeededChanged(uint count);
 
     constructor(address contractAddress_, address accountAddress_, address[] memory signers_, uint signersCountNeeded_)
     {
@@ -35,23 +47,25 @@ contract Multisig {
         signersCountNeeded = signersCountNeeded_;
     }
 
-    modifier ownerOnly() {
-        require(msg.sender == accountAddress);
-        _;
-    }
+
 
     modifier contractOnly() {
-        require(msg.sender == contractAddress);
+        require(msg.sender == contractAddress, "FunctionReservedToMameCoin");
         _;
     }
-    //    event NewTransaction(uint indexed transactionId, address to, uint256 value);
 
-    function createTransaction(addres to, uint value) {
+    modifier ownerOnly(address sender) {
+        require(msg.sender == contractAddress, "FunctionReservedToMameCoin");
+        require(sender == accountAddress, "NotUserMultigsig");
+        _;
+    }
+    
+    function createTransaction(addres to, uint value) external ownerOnly(sender) {
         uint transactionId = transactions.length;
         Transaction transaction;
         transaction.confirmations = 0;
         transaction.executed = false;
-        transaction.isConfirmed = false;
+        transaction.isConfirmed = (signersCountNeeded == 0);
         transaction.id = transactionId;
         transaction.to = to;
         transaction.value = value;
@@ -59,13 +73,23 @@ contract Multisig {
         emit NewTransaction(transaction.id, transaction.to, transaction.value);
     }
 
-    function addSigner (address signer) external ownerOnly() {
+    function setSignersCountNeeded (address sender, uint count) external ownerOnly(sender) {
         require(signer != address(0), "Missing arg");
-        signers[signers.length] = signer;
+        require(sender != address(0), "Missing arg");
+        signersCountNeeded = count;
+        emit SignerCountNeededChanged(count);
     }
 
-    function removeSigner (address signer) external ownerOnly() {
+    function addSigner (address sender, address signer) external ownerOnly(sender) {
         require(signer != address(0), "Missing arg");
+        require(sender != address(0), "Missing arg");
+        signers[signers.length] = signer;
+        emit NewSigner(signer);
+    }
+
+    function removeSigner (address sender, address signer) external ownerOnly(sender) {
+        require(signer != address(0), "Missing arg");
+        require(sender != address(0), "Missing arg");
         for (uint i = 0; i < signers.lenght; i++)
         {
             if (signers[i] == signer)
@@ -74,13 +98,14 @@ contract Multisig {
                 {
                     signers[j] = signers[j + 1];
                 }
+                emit SignerRevoked(signer);
                 signers.pop();
                 break;
             }
         }
     }
 
-    function _isSigner(address signer) view internal {
+    function _isSigner(address signer) internal {
         for (uint i = 0; i < signers.length; i++) {
             if (signers[i] == signer)
                 return (true);
@@ -88,14 +113,14 @@ contract Multisig {
         return (false);
     }
 
-    function _hasAlreadySigned(address signer, uint transactionId) view internal returns (bool) {
+    function _hasAlreadySigned(address signer, uint transactionId) internal returns (bool) {
         if (transactions[transactionId].isConfirmed[signer])
             return (true);
         return (false);
     }
 
-    function signTransaction(uint transactionId) external contractOnly() {
-        address signer = msg.sender;
+    function signTransaction(uint transactionId, address signer) external contractOnly() {
+        require(transaction.isConfirmed == false, "TransactionAlreadyConfirmed");
         require(_isSigner(signer), "SenderNotMultisigSigner");
         require(!(_hasAlreadySigned()), "SenderHasAlreadySigned");
 
@@ -103,19 +128,22 @@ contract Multisig {
         require(transaction.to != address(0), "NoExistingTransactionWithId");
 
         transaction.confirmations++;
-        transactions[transactionId].isConfirmed[signer] = true;
+        transaction.isConfirmed[signer] = true;
+        emit TransactionSigned(transactionId, signer, signersCountNeeded - transaction.confirmations);
 
         if (transaction.confirmations >= signersCountNeeded)
         {
+            emit TransactionConfirmed(transactionId, transaction.to, transaction.value);
             transaction.isConfirmed  = true;
         }
     }
 
-    function setTransactionExecuted(uint  transactionId) external {
+    function setTransactionExecuted(uint  transactionId) external contractOnly() {
         Transaction transaction = transactions[transactionId];
         require(transaction.to != address(0), "NoExistingTransactionWithId");
         require(!(transaction.executed), "Transaction already executed");
         transaction.executed = true;
+        emit TransactionExecuted(transactionId, transaction.to, transaction.value);
     }
 
 

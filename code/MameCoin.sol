@@ -17,7 +17,10 @@ contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
+
     mapping(address sender => Multisig multisig) multisigs;
+
+    event NewMultisigEnabled(address signer, address contractAddress);
 
     constructor(uint256 supply, address[] memory minters, address[] memory burners, address[] memory pausers) ERC20("MameCoin", "MAM") Ownable(msg.sender) {
         _decimals = 8;  // number of decimals
@@ -69,5 +72,48 @@ contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
 
     function _update(address from, address to, uint256 value) internal virtual override(ERC20, ERC20Pausable) {
         super._update(from, to, value);
+    }
+
+    // MULTISIG FUNCTIONS //
+
+    function _isMultisigEnabled(address signer) internal returns (bool) {
+        return (multisigs[signer] != Multisig(address(0)));
+    }
+
+    function getMultisgBySigner(address signer) public view returns (Multisig) {
+        require(multisigs[signer] != Multisig(address(0)), "MultisigNotEnabled");
+        return multisigs[signer];
+    }
+
+    function setMultisigSignersCountNeeded(address signer, uint signersCountNeeded) external {
+        require(multisigs[signer] != Multisig(address(0)), "MultisigNotEnabled");
+        address sender = msg.sender;
+        multisigs[signer].setSignersCountNeeded(sender, signersCountNeeded);
+    }
+
+    function addMultisigSigner(address signer, address newSigner) external {
+        require(multisigs[signer] != Multisig(address(0)), "MultisigNotEnabled");
+        address sender = msg.sender;
+        multisigs[signer].addSigner(sender, newSigner);
+    }
+
+    function removeMultisigSigner(address signer, address oldSigner) external {
+        require(multisigs[signer] != Multisig(address(0)), "MultisigNotEnabled");
+        address sender = msg.sender;
+        multisigs[signer].removeSigner(sender, oldSigner);
+    }
+
+    function enableMultisig(address[] signers, uint signersCountNeeded)
+    {
+        address signer = msg.sender;
+        require(multisigs[signer] == Multisig(address(0)), "MultisigAlreadyEnabled");
+        multisigs[signer] = new Multisig(address(this), signer, signers, signersCountNeeded);
+        emit NewMultisigEnabled(signer, address(multisigs[signer]));
+    }
+
+    function multisigSignTransaction(uint transactionId) external {
+        require(multisigs[signer] != Multisig(address(0)), "MultisigNotEnabled");
+        address sender = msg.sender;
+        multisigs[signer].signTransaction(transactionId, sender);
     }
 }
