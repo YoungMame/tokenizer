@@ -16,10 +16,17 @@ export const PARSED_TOTAL_SUPPLY = TOTAL_SUPPLY * 10 ** DECIMALS;
 
 describe("Multisig", function () {
   describe("Enabling", function () {
-    it ("Should revert the right event", async function name() {
-        const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);
-        await expect (mameCoinContract.connect(bob).enableMultisig([alice, jon], 2)).to.emit(mameCoinContract, "NewMultisigEnabled");
+    it ("Should emit the right event", async function name() {
+      const { mameCoinContract, owner, bob, alice, jon } = await loadFixture(deployFixture);
+      await expect (mameCoinContract.connect(bob).enableMultisig([alice, jon], 2)).to.emit(mameCoinContract, "NewMultisigEnabled");
     })
-    
+    it ("Should revert", async function name() {
+      const { mameCoinContract, owner, bob, alice, jon } = await loadFixture(deployFixture);
+      await expect (mameCoinContract.connect(bob).enableMultisig([alice, jon], 2)).to.emit(mameCoinContract, "NewMultisigEnabled");
+      await expect (mameCoinContract.connect(bob).enableMultisig([alice, jon], 2)).to.be.revertedWithCustomError(
+        mameCoinContract,
+        "MultisigAlreadyEnabled"
+      );;
+    })
   })
 });

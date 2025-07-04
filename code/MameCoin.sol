@@ -103,17 +103,16 @@ contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
         multisigs[signer].removeSigner(sender, oldSigner);
     }
 
-    function enableMultisig(address[] signers, uint signersCountNeeded)
-    {
+    function enableMultisig(address[] memory signers, uint signersCountNeeded) external{
         address signer = msg.sender;
         require(multisigs[signer] == Multisig(address(0)), "MultisigAlreadyEnabled");
         multisigs[signer] = new Multisig(address(this), signer, signers, signersCountNeeded);
         emit NewMultisigEnabled(signer, address(multisigs[signer]));
     }
 
-    function multisigSignTransaction(uint transactionId) external {
-        require(multisigs[signer] != Multisig(address(0)), "MultisigNotEnabled");
+    function multisigSignTransaction(uint transactionId, address account) external {
+        require(multisigs[account] != Multisig(address(0)), "MultisigNotEnabled");
         address sender = msg.sender;
-        multisigs[signer].signTransaction(transactionId, sender);
+        multisigs[account].signTransaction(transactionId, sender);
     }
 }
