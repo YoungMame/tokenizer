@@ -54,6 +54,19 @@ contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
         }
     }
 
+    function submitTransaction(address to, uint256 value) external returns (uint) {
+        require(_isMultisigEnabled(msg.sender), "MultisigNotEnabled");
+        Multisig multisig = getMultisgBySigner(msg.sender);
+        return multisig.createTransaction(to, value);
+    }
+
+    function transfer(address to, uint256 value) public virtual override returns (bool)
+    {
+        require(!_isMultisigEnabled(msg.sender), "MultisigEnabled");
+        super.transfer(to, value);
+        return true;
+    }
+
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
         _mint(to, amount);
     }
@@ -76,7 +89,7 @@ contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
 
     // MULTISIG FUNCTIONS //
 
-    function _isMultisigEnabled(address signer) internal returns (bool) {
+    function _isMultisigEnabled(address signer) private view returns (bool) {
         return (multisigs[signer] != Multisig(address(0)));
     }
 
@@ -91,28 +104,48 @@ contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
         multisigs[signer].setSignersCountNeeded(sender, signersCountNeeded);
     }
 
-    function addMultisigSigner(address signer, address newSigner) external {
-        require(multisigs[signer] != Multisig(address(0)), "MultisigNotEnabled");
+    function addMultisigSigner(address newSigner) external {
         address sender = msg.sender;
-        multisigs[signer].addSigner(sender, newSigner);
+        require(multisigs[sender] != Multisig(address(0)), "MultisigNotEnabled");
+        multisigs[sender].addSigner(sender, newSigner);
     }
 
-    function removeMultisigSigner(address signer, address oldSigner) external {
-        require(multisigs[signer] != Multisig(address(0)), "MultisigNotEnabled");
+    function removeMultisigSigner(address oldSigner) external {
         address sender = msg.sender;
-        multisigs[signer].removeSigner(sender, oldSigner);
+        require(multisigs[sender] != Multisig(address(0)), "MultisigNotEnabled");
+        multisigs[sender].removeSigner(sender, oldSigner);
     }
 
-    function enableMultisig(address[] memory signers, uint signersCountNeeded) external{
+    function enableMultisig(address[] memory signers, uint signersCountNeeded) external returns (Multisig) {
         address signer = msg.sender;
         require(multisigs[signer] == Multisig(address(0)), "MultisigAlreadyEnabled");
         multisigs[signer] = new Multisig(address(this), signer, signers, signersCountNeeded);
         emit NewMultisigEnabled(signer, address(multisigs[signer]));
+        return multisigs[signer];
+    }
+
+    function submitTransactionToMultisig(address to, uint256 value) external returns (uint) {
+        address sender = msg.sender;
+        require(multisigs[sender] != Multisig(address(0)), "MultisigNotEnabled");
+        return multisigs[sender].createTransaction(to, value);
     }
 
     function multisigSignTransaction(uint transactionId, address account) external {
         require(multisigs[account] != Multisig(address(0)), "MultisigNotEnabled");
         address sender = msg.sender;
         multisigs[account].signTransaction(transactionId, sender);
+        if (multisigs[account].canTransactionBeExecuted(transactionId)) {
+            uint id;
+            address to;
+            uint256 value;
+            bool executed;
+            uint8 confirmations;
+
+            (id, to, value, executed, confirmations) = multisigs[account].getTransaction(transactionId);
+            require(to != address(0), "NoExistingTransactionWithId");
+            require(!executed, "TransactionAlreadyExecuted");
+            multisigs[account].setTransactionExecuted(transactionId);
+            super.transfer(to, value);
+        }
     }
 }
