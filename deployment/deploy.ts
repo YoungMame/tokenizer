@@ -11,15 +11,14 @@ async function main() {
     );
     console.log(deployer);
    
-    const TournamentFactoryFactory = await ethers.getContractFactory("TournamentFactory");
-    const tournamentFactory = await TournamentFactoryFactory.deploy();
+    const MameCoinFactory = await ethers.getContractFactory("MameCoin");
+    const mameCoin = await MameCoinFactory.deploy();
+    console.log("MameCoin contract address:", mameCoin.target);
 
-    console.timeLog("TournamentFactory deployed to:", tournamentFactory.target);
-  
-    saveFrontendFiles(tournamentFactory);
+    saveFrontendFiles(mameCoin);
 }
 
-function saveFrontendFiles(tournament: any) {
+function saveFrontendFiles(mameCoin: any) {
     const contractsDir = path.join(__dirname, "..", "contractData");
   
     if (!fs.existsSync(contractsDir)) {
@@ -28,20 +27,14 @@ function saveFrontendFiles(tournament: any) {
   
     fs.writeFileSync(
       path.join(contractsDir, "contract-address.json"),
-      JSON.stringify({ value: tournament.target }, undefined, 2)
-    );
-  
-    const TournamentArtifact = artifacts.readArtifactSync("Tournament");
-    const TournamentFactoryArtifact = artifacts.readArtifactSync("TournamentFactory");
-  
-    fs.writeFileSync(
-      path.join(contractsDir, "Tournament.json"),
-      JSON.stringify(TournamentArtifact, null, 2)
+      JSON.stringify({ value: mameCoin.target }, undefined, 2)
     );
 
+    const MameCoinArtifact = artifacts.readArtifactSync("MameCoin");
+
     fs.writeFileSync(
-      path.join(contractsDir, "TournamentFactory.json"),
-      JSON.stringify(TournamentFactoryArtifact, null, 2)
+      path.join(contractsDir, "MameCoin.json"),
+      JSON.stringify(MameCoinArtifact, null, 2)
     );
 }
   
