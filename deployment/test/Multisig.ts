@@ -49,23 +49,70 @@ describe("Multisig", function () {
       const { mameCoinContract, owner, bob, alice, jon, bobMultisig } = await loadFixture(bobMultisigEnabledFixture);
       await mameCoinContract.connect(owner).mint(bob, 42153);
       
-      const tx = await mameCoinContract.connect(bob).submitTransactionToMultisig(owner.address, 42153);
+      const tx = await mameCoinContract.connect(bob).submitTransactionToMultisig(owner, 42153);
       const receipt = await tx.wait();
-      
-      const event = receipt.logs.find((log : any) => {
-          try {
-              const parsed = mameCoinContract.interface.parseLog(log);
-              return parsed.name === 'TransactionCreated';
-          } catch {
-              return false;
-          }
-      });
-      
-      const parsed = mameCoinContract.interface.parseLog(event);
-      const transactionId = parsed.args.transactionId;
-      console.log("Transaction ID:", transactionId.toString());
-      await expect(mameCoinContract.connect(alice).multisigSignTransaction(transactionId, bob)).to.emit(bobMultisig, "NewSigner");
-      await expect(mameCoinContract.connect(jon).multisigSignTransaction(transactionId, bob)).to.emit(bobMultisig, "NewSigner");;
+      expect(receipt.status).to.equal(1, "Transaction should be successful");
+      const event = receipt.logs?.find((event: any) => event.fragment.name == "NewTransaction");
+      const transactionId = event?.args?.transactionId;
+      expect(transactionId).to.not.be.undefined;
     });
-  })
+
+    it("Should execute transaction after signers", async function() {
+      const { mameCoinContract, owner, bob, alice, jon, bobMultisig } = await loadFixture(bobMultisigEnabledFixture);
+      await mameCoinContract.connect(owner).mint(bob, 42153);
+      expect(await mameCoinContract.balanceOf(bob)).to.equal(42153, "Bob should have 42153 MAM");
+      
+      const tx = await mameCoinContract.connect(bob).submitTransactionToMultisig(owner, 42153);
+      const receipt = await tx.wait();
+      expect(receipt.status).to.equal(1, "Transaction should be successful");
+      const event = receipt.logs?.find((event: any) => event.fragment.name == "NewTransaction");
+      const transactionId = event?.args?.transactionId;
+      const ownerOldBalance = await mameCoinContract.balanceOf(owner);
+      expect(transactionId).to.not.be.undefined;
+      await expect(mameCoinContract.connect(alice).multisigSignTransaction(transactionId, bob)).to.emit(bobMultisig, "TransactionSigned").withArgs(transactionId, alice, 1 );
+      await expect(mameCoinContract.connect(jon).multisigSignTransaction(transactionId, bob)).to.emit(bobMultisig, "TransactionConfirmed").withArgs(transactionId, owner, 42153).to.emit(bobMultisig, "TransactionExecuted").withArgs(transactionId, owner, 42153);
+
+      expect((await mameCoinContract.balanceOf(owner)) - ownerOldBalance).to.equal(42153);
+    });
+  });
+  describe("Unauthorized access", function () {
+    it("Should revert when a non-signer tries to sign a transaction", async function() {
+      const { mameCoinContract, owner, bob, alice, jon, bobMultisig } = await loadFixture(bobMultisigEnabledFixture);
+      await mameCoinContract.connect(owner).mint(bob, 42153);
+      const tx = await mameCoinContract.connect(bob).submitTransactionToMultisig(owner, 42153);
+      const receipt = await tx.wait();
+      const event = receipt.logs?.find((event: any) => event.fragment.name == "NewTransaction");
+      const transactionId = event?.args?.transactionId;
+      expect(transactionId).to.not.be.undefined;
+      
+      await expect(mameCoinContract.connect(owner).multisigSignTransaction(transactionId, bob)).to.be.revertedWith("SenderNotMultisigSigner");
+    });
+    it("Should revert when non contract tries to set transaction executed", async function() {
+      const { mameCoinContract, owner, bob, alice, jon, bobMultisig } = await loadFixture(bobMultisigEnabledFixture);
+      await mameCoinContract.connect(owner).mint(bob, 42153);
+      const tx = await mameCoinContract.connect(bob).submitTransactionToMultisig(owner, 42153);
+      const receipt = await tx.wait();
+      const event = receipt.logs?.find((event: any) => event.fragment.name == "NewTransaction");
+      const transactionId = event?.args?.transactionId;
+      expect(transactionId).to.not.be.undefined;
+      
+      await expect(bobMultisig.connect(alice).setTransactionExecuted(transactionId)).to.be.revertedWith("FunctionReservedToMameCoin");
+    });
+    it("Should revert when non contract tries to create transaction", async function() {
+      const { mameCoinContract, owner, bob, alice, jon, bobMultisig } = await loadFixture(bobMultisigEnabledFixture);
+      await expect(bobMultisig.connect(alice).createTransaction(owner, 42153)).to.be.revertedWith("FunctionReservedToMameCoin");
+    });
+    it("Should revert when non contract tries to add signer to other account", async function() {
+      const { mameCoinContract, owner, bob, alice, jon, bobMultisig } = await loadFixture(bobMultisigEnabledFixture);
+      await expect(bobMultisig.connect(alice).addSigner(bob, jon)).to.be.revertedWith("FunctionReservedToMameCoin");
+    });
+    it("Should revert when non contract tries to remove signer from other account", async function() {
+      const { mameCoinContract, owner, bob, alice, jon, bobMultisig } = await loadFixture(bobMultisigEnabledFixture);
+      await expect(bobMultisig.connect(alice).removeSigner(bob, jon)).to.be.revertedWith("FunctionReservedToMameCoin");
+    });
+    it("Should revert when non contract tries to set signers count needed from other account", async function() {
+      const { mameCoinContract, owner, bob, alice, jon, bobMultisig } = await loadFixture(bobMultisigEnabledFixture);
+      await expect(bobMultisig.connect(alice).setSignersCountNeeded(bob, 2)).to.be.revertedWith("FunctionReservedToMameCoin");
+    });
+  });
 });

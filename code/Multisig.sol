@@ -39,6 +39,8 @@ contract Multisig {
 
     constructor(address contractAddress_, address accountAddress_, address[] memory signers_, uint signersCountNeeded_)
     {
+        require(contractAddress_ != address(0), "Missing contract address");
+        require(accountAddress_ != address(0), "Missing account address");
         for (uint i = 0; i < signers_.length; i++)
         {
             signers.push(signers_[i]);
@@ -62,6 +64,8 @@ contract Multisig {
     }
     
     function createTransaction(address to, uint value) external contractOnly() returns (uint) {
+        require(to != address(0), "Missing arg");
+        require(value > 0, "Missing arg");
         uint transactionId = transactions.length;
         transactions.push();
         Transaction storage transaction = transactions[transactionId];
@@ -128,8 +132,8 @@ contract Multisig {
         require(transaction.to != address(0), "NoExistingTransactionWithId");
 
         confirmations[transactionId][signer] = true;
+        transaction.confirmations++;
         emit TransactionSigned(transactionId, signer, signersCountNeeded - transaction.confirmations);
-
         if (transaction.confirmations >= signersCountNeeded)
         {
             emit TransactionConfirmed(transactionId, transaction.to, transaction.value);

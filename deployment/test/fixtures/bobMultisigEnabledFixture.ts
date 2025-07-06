@@ -17,6 +17,5 @@ export default async function bobMultisigEnabledFixture() {
   const Multisig = await hre.ethers.getContractFactory("Multisig");
   const bobMultisig = Multisig.attach(multisigAddress);
   
-  console.log(bobMultisig);
   return { mameCoinContract, owner, bob, alice, jon, bobMultisig };
 }

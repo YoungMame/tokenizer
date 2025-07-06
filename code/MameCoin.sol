@@ -21,6 +21,14 @@ contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
     mapping(address sender => Multisig multisig) multisigs;
 
     event NewMultisigEnabled(address signer, address contractAddress);
+    event NewTransaction(uint indexed transactionId, address to, uint256 value);
+    event NewSigner(address signer);
+    event SignerRevoked(address signer);
+    event TransactionSigned(uint indexed transactionId, address signer, uint lastingConfirmations);
+    event TransactionConfirmed(uint transactionId, address to, uint256 value);
+    event TransactionExecuted(uint transactionId, address to, uint256 value);
+    event SignerCountNeededChanged(uint count);
+
 
     constructor(uint256 supply, address[] memory minters, address[] memory burners, address[] memory pausers) ERC20("MameCoin", "MAM") Ownable(msg.sender) {
         _decimals = 8;  // number of decimals
@@ -52,12 +60,6 @@ contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
             _grantRole(PAUSER_ROLE, pausers[j]);
             j++;
         }
-    }
-
-    function submitTransaction(address to, uint256 value) external returns (uint) {
-        require(_isMultisigEnabled(msg.sender), "MultisigNotEnabled");
-        Multisig multisig = getMultisgBySigner(msg.sender);
-        return multisig.createTransaction(to, value);
     }
 
     function transfer(address to, uint256 value) public virtual override returns (bool)
@@ -127,7 +129,9 @@ contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
     function submitTransactionToMultisig(address to, uint256 value) external returns (uint) {
         address sender = msg.sender;
         require(multisigs[sender] != Multisig(address(0)), "MultisigNotEnabled");
-        return multisigs[sender].createTransaction(to, value);
+        uint transactionId = multisigs[sender].createTransaction(to, value);
+        emit NewTransaction(transactionId, to, value);
+        return transactionId;
     }
 
     function multisigSignTransaction(uint transactionId, address account) external {
@@ -142,10 +146,12 @@ contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
             uint8 confirmations;
 
             (id, to, value, executed, confirmations) = multisigs[account].getTransaction(transactionId);
+
             require(to != address(0), "NoExistingTransactionWithId");
             require(!executed, "TransactionAlreadyExecuted");
             multisigs[account].setTransactionExecuted(transactionId);
-            super.transfer(to, value);
+            _transfer(account, to, value); 
+            emit TransactionExecuted(transactionId, to, value);
         }
     }
 }
