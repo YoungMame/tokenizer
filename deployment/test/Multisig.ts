@@ -115,4 +115,26 @@ describe("Multisig", function () {
       await expect(bobMultisig.connect(alice).setSignersCountNeeded(bob, 2)).to.be.revertedWith("FunctionReservedToMameCoin");
     });
   });
+  describe("More complex scenarios", function () {
+    it("Should revert when trying to sign 2 times the same transaction", async function() {
+      const { mameCoinContract, owner, bob, alice, jon, bobMultisig } = await loadFixture(bobMultisigEnabledFixture);
+      await mameCoinContract.connect(owner).mint(bob, 42153);
+      const tx = await mameCoinContract.connect(bob).submitTransactionToMultisig(owner, 42153);
+      const receipt = await tx.wait();
+      const event = receipt.logs?.find((event: any) => event.fragment.name == "NewTransaction");
+      const transactionId = event?.args?.transactionId;
+      expect(transactionId).to.not.be.undefined;
+      
+      await expect(mameCoinContract.connect(alice).multisigSignTransaction(transactionId, bob)).to.emit(bobMultisig, "TransactionSigned").withArgs(transactionId, alice, 1 );
+      await expect(mameCoinContract.connect(alice).multisigSignTransaction(transactionId, bob)).to.be.revertedWith("TransactionAlreadyConfirmed");
+    });
+    it ("Should revert when trying to sign non existing transaction", async function() {
+      const { mameCoinContract, owner, bob, alice, jon, bobMultisig } = await loadFixture(bobMultisigEnabledFixture);
+      await expect(mameCoinContract.connect(alice).multisigSignTransaction(42, bob)).to.be.revertedWith("NoExistingTransactionWithId");
+    });
+    it ("Should revert when trying to sign transaction of a non multisig account", async function() {
+      const { mameCoinContract, owner, bob, alice, jon, bobMultisig } = await loadFixture(bobMultisigEnabledFixture);
+      await expect(mameCoinContract.connect(jon).multisigSignTransaction(1, alice)).to.be.revertedWith("MultisigNotEnabled");
+    });
+  });
 });

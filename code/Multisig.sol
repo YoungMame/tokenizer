@@ -125,6 +125,7 @@ contract Multisig {
     }
 
     function signTransaction(uint transactionId, address signer) external contractOnly() {
+        require(transactionId < transactions.length, "NoExistingTransactionWithId");
         Transaction storage transaction = transactions[transactionId];    
         require(confirmations[transactionId][signer] == false, "TransactionAlreadyConfirmed");
         require((_isSigner(signer)), "SenderNotMultisigSigner");

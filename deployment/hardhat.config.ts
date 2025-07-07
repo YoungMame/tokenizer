@@ -1,5 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-ignition";
 
 // const forkingData: Object = {
 //   url: process.env.FUJI_URL || "https://api.avax-test.network/ext/bc/C/rpc",

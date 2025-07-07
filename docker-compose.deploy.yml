@@ -4,6 +4,8 @@ services:
   smart-contract-service:
     container_name: smart-contract-service
     restart: on-failure
+    volumes:
+      - ./deployment/contractData/:/usr/src/app/contractData
     environment:
       SIGNER_PRIVATE_KEY: ${SIGNER_PRIVATE_KEY:?}
       FUJI_CHAIN_ID: ${FUJI_CHAIN_ID:?}
