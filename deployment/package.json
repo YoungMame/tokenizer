@@ -4,10 +4,11 @@
   "description": "",
   "scripts": {
     "test": "npx hardhat test",
+    "clean": "npx hardhat clean",
     "compile": "npx hardhat compile",
-    "deploy": "npx hardhat ignition deploy ./ignition/modules/MameCoin.ts --network fuji",
+    "deploy": "npx hardhat run ./deploy.ts --network fuji",
     "dev": "npx hardhat node",
-    "deploy:local": "npx hardhat ignition deploy ./ignition/modules/MameCoin.ts --network localhost"
+    "deploy:local": "npx hardhat run ./deploy.ts --network localhost"
   },
   "keywords": [],
   "author": "",

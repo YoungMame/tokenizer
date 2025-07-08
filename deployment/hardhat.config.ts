@@ -21,10 +21,7 @@ const config: HardhatUserConfig = {
       gasPrice: 1000000000, // 1 Gwei = 1_000_000_000 wei = 0.001 AVAX is an avergae gas price for testing
       chainId: !forkingData ? 43112 : undefined,
       forking: forkingData,
-      accounts: {
-        count: 10, // number of accounts to generate
-        accountsBalance: "42000000000000000000", // 42 AVAX in wei for each account
-      },
+      accounts: [{ privateKey: process.env.SIGNER_PRIVATE_KEY || "", balance: "10000000000000000000000" }] // 10_000 AVAX
     },
     fuji: {
       gasPrice: 1000000000, // 1 Gwei = 1_000_000_000 wei = 0.001 AVAX is an avergae gas price for testing
