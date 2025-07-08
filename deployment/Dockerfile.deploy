@@ -6,7 +6,7 @@ RUN apk update --no-cache && \
     apk add pnpm
 
 COPY ../code /usr/src/app/code
-COPY ./ /usr/src/app/
+COPY ./deployment /usr/src/app/
 
 RUN pnpm i --prod
 
