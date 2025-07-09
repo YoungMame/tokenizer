@@ -3,11 +3,10 @@ name: tokenizer
 services:
   smart-contract-service:
     container_name: smart-contract-service
-    # restart: on-failure
+    restart: on-failure
     volumes:
       - ./deployment/test:/usr/src/app/test
       - ./code:/usr/src/app/code
-      - ./deployment/contractData/:/usr/src/app/contractData
     environment:
       SIGNER_PRIVATE_KEY: ${SIGNER_PRIVATE_KEY:?}
       FUJI_CHAIN_ID: ${FUJI_CHAIN_ID:?}

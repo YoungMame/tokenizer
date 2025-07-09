@@ -16,7 +16,10 @@ async function main() {
     // console.log("Account balance:", (await deployer.getBalance()).toString());
 
     const Token = await ethers.getContractFactory("MameCoin");
-    const token = await Token.deploy((10 ** 8) * 5000000, [], [], []);
+    console.log("Token contract factory:", Token);
+    const supply = ethers.parseUnits("5000000", 8); // 5 million tokens with 8 decimals
+    const token = await Token.deploy(supply, [], [], []);
+    console.log("token object:", token);
     // No need to call token.deployed(), deploy() already waits for deployment
 
     console.log("Token address:", token.target);
