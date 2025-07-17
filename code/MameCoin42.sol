@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 // Uncomment this line to use console.log
 import "hardhat/console.sol";
 
-contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
+contract MameCoin42 is ERC20, ERC20Pausable, Ownable, AccessControl {
     uint8 private _decimals;
     address _owner;
 
@@ -30,7 +30,7 @@ contract MameCoin is ERC20, ERC20Pausable, Ownable, AccessControl {
     event SignerCountNeededChanged(uint count);
 
 
-    constructor(uint256 supply, address[] memory minters, address[] memory burners, address[] memory pausers) ERC20("MameCoin", "MAM") Ownable(msg.sender) {
+    constructor(uint256 supply, address[] memory minters, address[] memory burners, address[] memory pausers) ERC20("MameCoin42", "MAM") Ownable(msg.sender) {
         _decimals = 8;  // number of decimals
         _mint(msg.sender, supply); // init total supply and send it to the deployer account
         _owner = msg.sender;

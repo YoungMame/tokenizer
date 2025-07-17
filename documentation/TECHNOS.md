@@ -4,7 +4,7 @@
 
 OpenZeppelin is a library for secure smart contract development. It provides reusable and secure smart contract components, including the ERC20 token standard implementation.
 
-I chose to use OpenZeppelin implementation of ERC20 for the MameCoin token because it's tested and widely used library that follows best practices in smart contract development used by most of the DeFi projects.
+I chose to use OpenZeppelin implementation of ERC20 for the MameCoin42 token because it's tested and widely used library that follows best practices in smart contract development used by most of the DeFi projects.
 
 ## Solidity
 

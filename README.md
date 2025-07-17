@@ -6,7 +6,7 @@ This project consist in creating a token via a Smart contract on BTC or ETHER bl
 - Smart contract testing
 - Dockerized environment for development and deployment
 - Ownable contract for managing ownership
-- MameCoin token contract with minting and burning capabilities
+- MameCoin42 token contract with minting and burning capabilities
 - Multisig implementation for secure transactions
 
 # Requirements

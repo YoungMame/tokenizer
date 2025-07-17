@@ -14,7 +14,6 @@ build_test:
 up_test:
 	docker compose -f $(compose_file_test) up
 
-
 compile:
 	docker compose -f $(compose_file_prod) build
 
