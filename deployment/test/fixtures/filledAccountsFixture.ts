@@ -3,7 +3,7 @@ import {
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
-import { TOTAL_SUPPLY, DECIMALS } from "../MameCoin"
+import { TOTAL_SUPPLY, DECIMALS } from "../MameCoin42"
 import deployFixture from "./deployFixture";
 
 export default async function filledAccountsFxiture() {

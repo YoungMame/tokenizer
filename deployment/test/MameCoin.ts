@@ -8,11 +8,11 @@ import filledAccountsFxiture from "./fixtures/filledAccountsFixture";
 
 export const DECIMALS = 8;
 export const TOTAL_SUPPLY = 420000;
-export const NAME = "MameCoin";
+export const NAME = "MameCoin42";
 export const SYMBOL = "MAM";
 export const PARSED_TOTAL_SUPPLY = TOTAL_SUPPLY * 10 ** DECIMALS;
 
-describe("MameCoin", function () {
+describe("MameCoin42", function () {
   describe("Deployment", function () {
     it("Should set the right supply amount", async function () {
       const { mameCoinContract, owner, bob, alice } = await loadFixture(deployFixture);

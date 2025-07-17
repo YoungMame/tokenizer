@@ -15,7 +15,7 @@ async function main() {
     // /   console.log("Account balance:", (await deployer.getBalance()).toString());
     // console.log("Account balance:", (await deployer.getBalance()).toString());
 
-    const Token = await ethers.getContractFactory("MameCoin");
+    const Token = await ethers.getContractFactory("MameCoin42");
     console.log("Token contract factory:", Token);
     const supply = ethers.parseUnits("5000000", 8); // 5 million tokens with 8 decimals
     const token = await Token.deploy(supply, [], [], []);
