@@ -40,3 +40,7 @@ To deploy the smart contract, you can run the following command in the root of t
 make deploy
 ```
 This command will deploy the smart contract to the fuji testnet and display the address of the deployed contract in the console.
+
+# Using the token
+
+To use the token you will have to log in on a wallet with the deployer address, then select fuji testnet or add, and select the MameCoin42 token in your wallet or add it, then you can send tokens to other addresses
