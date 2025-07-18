@@ -1,6 +1,10 @@
 # Tokenizer
 This project consist in creating a token via a Smart contract on BTC or ETHER blockchain i the respect of the current blockchain smart contract norm, in my case i'll use ETHER so i'ill have to respect ERC20 norm.
 
+I implemented a multisig system to allow multiple users to sign transactions before they are executed, enhancing security and preventing unauthorized access.
+
+User can enable multisig that will deploy a Multisig contract, add and remove signers, submit transactions, and sign transactions to execute them once the required number of signatures is reached.
+
 # Features
 - Smart contract deployment using Hardhat
 - Smart contract testing
