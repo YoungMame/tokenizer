@@ -97,6 +97,7 @@ contract Multisig {
         require(to != address(0), "Missing arg");
         require(value > 0, "Missing arg");
         uint transactionId = transactions.length;
+        transactions.push(); // init first empty transaction
         Transaction storage transaction = transactions[transactionId];
         transaction.executed = false;
         transaction.id = transactionId;
