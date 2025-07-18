@@ -3,7 +3,7 @@ import {
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
-import { TOTAL_SUPPLY, DECIMALS } from "../MameCoin42";
+import { TOTAL_SUPPLY, DECIMALS } from "../MameCoin";
 
 export default async function bobMultisigEnabledFixture() {
   const [owner, bob, alice, jon] = await hre.ethers.getSigners();

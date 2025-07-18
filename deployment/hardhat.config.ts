@@ -9,7 +9,16 @@ import "@nomicfoundation/hardhat-ignition";
 const forkingData = undefined;
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.28",
+  solidity: {
+    version: "0.8.28",
+    settings: {
+      // optimizer is enabled to reduce gas costs
+      optimizer: {
+        enabled: true,
+        runs: 200, // 200 is a good default for most contracts
+      },
+    },
+  },
   paths: {
     sources: "./code",
     tests: "./test",

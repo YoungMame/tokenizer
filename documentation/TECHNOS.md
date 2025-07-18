@@ -1,5 +1,22 @@
 # Project technos
 
+## Avalanche
+
+Avalanche is a blockchain platform that supports smart contracts on the C chain which is compatible with the Ethereum Virtual Machine (EVM). This allows developers to deploy Ethereum-compatible smart contracts on Avalanche.
+
+### Why i chose Avalanche
+
+#### Consensus
+Avalanche uses a unique consensus mechanism that allows for low latency and uses the Proof of Stake wich is more efficient than Proof of Work of Bitcoin that use a lot of energy and need his calculs to be more and more complex to be secure in the time.
+
+#### Accessibility
+
+Avalanche is accessible to developpers providing 2 test AVAX on his C testnet Fuji, and the mainnet is also accessible to everyone.
+
+#### Snowtrace
+
+Avalanche has his block explorer called Snowtrace that allows you to view transactions, blocks, and smart contracts on the Avalanche network
+
 ## OpenZeppelin
 
 OpenZeppelin is a library for secure smart contract development. It provides reusable and secure smart contract components, including the ERC20 token standard implementation.

@@ -13,13 +13,16 @@ contract MameCoin42 is ERC20, ERC20Pausable, Ownable, AccessControl {
     uint8 private _decimals;
     address _owner;
 
+    // Define roles for minters, burners, and pausers
+    // keccak256 is used to create unique identifiers for roles by hashing the role names
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
-
+    // Mapping to store multisig contracts for each signer
     mapping(address sender => Multisig multisig) multisigs;
 
+    // Event are useful on MameCoin to log contract activity and mutlisig activity
     event NewMultisigEnabled(address signer, address contractAddress);
     event NewTransaction(uint indexed transactionId, address to, uint256 value);
     event NewSigner(address signer);
@@ -29,7 +32,7 @@ contract MameCoin42 is ERC20, ERC20Pausable, Ownable, AccessControl {
     event TransactionExecuted(uint transactionId, address to, uint256 value);
     event SignerCountNeededChanged(uint count);
 
-
+    // supply is the total supply of the token with 8 decimals
     constructor(uint256 supply, address[] memory minters, address[] memory burners, address[] memory pausers) ERC20("MameCoin42", "MAM") Ownable(msg.sender) {
         _decimals = 8;  // number of decimals
         _mint(msg.sender, supply); // init total supply and send it to the deployer account
@@ -62,6 +65,7 @@ contract MameCoin42 is ERC20, ERC20Pausable, Ownable, AccessControl {
         }
     }
 
+    // Override the transfer function to prevent transfers if multisig is enabled
     function transfer(address to, uint256 value) public virtual override returns (bool)
     {
         require(!_isMultisigEnabled(msg.sender), "MultisigEnabled");
@@ -69,14 +73,17 @@ contract MameCoin42 is ERC20, ERC20Pausable, Ownable, AccessControl {
         return true;
     }
 
+    // Override the mint function to allow only minters to mint tokens
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
         _mint(to, amount);
     }
 
+    // Override the burn function to allow only burners to burn tokens
     function burn(address from, uint256 amount) public onlyRole(BURNER_ROLE) {
         _burn(from, amount);
     }
 
+    // Override the pause function to allow only pausers to pause the contract
     function pause() public onlyRole(PAUSER_ROLE) {
         _pause();
     }
